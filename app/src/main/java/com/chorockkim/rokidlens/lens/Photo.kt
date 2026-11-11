@@ -48,6 +48,14 @@ object Photo {
         return bitmap
     }
 
+    /** The centred [Focus] area of [bitmap] (a new bitmap; [bitmap] is recycled). */
+    fun focus(bitmap: Bitmap, fraction: Float = Focus.FRACTION): Bitmap {
+        val (left, top, w, h) = Focus.area(bitmap.width, bitmap.height, fraction).toList()
+        val cropped = Bitmap.createBitmap(bitmap, left, top, w, h)
+        if (cropped !== bitmap) bitmap.recycle()
+        return cropped
+    }
+
     fun jpeg(bitmap: Bitmap, quality: Int = JPEG_QUALITY): ByteArray =
         ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, quality, it) }.toByteArray()
 }

@@ -75,6 +75,7 @@ class LensScreen(context: Context, private val preview: View?) {
             addView(modeLabel, LinearLayout.LayoutParams(-1, -2).apply { topMargin = context.dp(4) })
         }
         preview?.let { previewFrame.addView(it, FrameLayout.LayoutParams(-1, -1)) }
+        previewFrame.addView(FocusFrame(context), FrameLayout.LayoutParams(-1, -1))
         view.addView(left, LinearLayout.LayoutParams(-2, -1))
 
         val right = LinearLayout(context).apply {
@@ -102,7 +103,7 @@ class LensScreen(context: Context, private val preview: View?) {
         mode = Mode.READY
         frozen = emptyList()
         modeLabel.text = "대기"
-        header.text = "글자를 가운데에 두고 탭하세요"
+        header.text = "읽을 글을 점선 안에 두고 탭하세요"
         hint.text = "탭: 사진 찍어 번역 · 뒤로: 나가기"
         render(emptyList(), "탭하면 사진을 찍어\n보이는 글자를 번역해요")
     }
@@ -154,7 +155,7 @@ class LensScreen(context: Context, private val preview: View?) {
             else -> "${frozenIndex + 1} / ${frozen.size}$via" + pairLabel(frozen)
         }
         hint.text = "앞뒤로: 넘기기 · 탭: 다시 찍기 · 뒤로: 닫기"
-        render(frozen.drop(frozenIndex).take(FROZEN_PER_PAGE), if (frozen.isEmpty()) "글자가 가운데 오게 하고\n다시 탭해 보세요" else null)
+        render(frozen.drop(frozenIndex).take(FROZEN_PER_PAGE), if (frozen.isEmpty()) "읽을 글을 점선 안에 두고\n다시 탭해 보세요" else null)
     }
 
     private fun render(list: List<LensPipeline.Item>, emptyText: String?) {

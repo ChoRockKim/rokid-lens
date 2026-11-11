@@ -50,7 +50,8 @@ class LensPipeline(
         scope.launch {
             val bitmap: Bitmap
             try {
-                bitmap = Photo.upright(Photo.jpegBytes(frame.proxy), frame.rotationDegrees)
+                // Only the middle, which is what the wearer aims at (see Focus).
+                bitmap = Photo.focus(Photo.upright(Photo.jpegBytes(frame.proxy), frame.rotationDegrees))
             } catch (e: Throwable) {
                 listener.onError(errorText(e))
                 return@launch
@@ -84,8 +85,11 @@ class LensPipeline(
         }
         val winner = state.winnerScript ?: state.primaryScript
         lastScript = winner
-        val paragraphs = texts[winner]?.let { segmentFrozenParagraphs(OcrEngine.layoutBlocks(it)) }.orEmpty()
-            .filter { LanguagePlan.worthTranslating(it.source) }
+        val paragraphs = Focus.centerFirst(
+            texts[winner]?.let { segmentFrozenParagraphs(OcrEngine.layoutBlocks(it)) }.orEmpty()
+                .filter { LanguagePlan.worthTranslating(it.source) },
+            bitmap.width, bitmap.height
+        )
         if (paragraphs.isEmpty()) {
             listener.onProgress(emptyList(), 0, done = true, engine = Engine.OFFLINE)
             return
