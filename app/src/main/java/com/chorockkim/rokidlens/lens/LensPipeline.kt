@@ -143,7 +143,7 @@ class LensPipeline(
     }
 
     companion object {
-        const val LIVE_INTERVAL_MS = 800L
-        const val EMPTY_FRAMES_TO_CLEAR = 3
+        const val LIVE_INTERVAL_MS = 1_500L
+        const val EMPTY_FRAMES_TO_CLEAR = 2
     }
 }
