@@ -80,6 +80,23 @@ class LensSnapshotTest {
     }
 
     @Test
+    fun result_longSentencesAreNotCut() {
+        val screen = LensScreen(context, fakePreview())
+        screen.showReading()
+        val notice = listOf(
+            Item(
+                "Passengers are kindly requested to keep their belongings with them at all times and to report any unattended items to station staff.",
+                "승객 여러분께서는 소지품을 항상 몸에 지니시고, 주인 없는 물건을 발견하시면 역무원에게 알려 주시기 바랍니다.",
+                "en", "ko"
+            ),
+            Item("Thank you for your cooperation.", "협조해 주셔서 감사합니다.", "en", "ko"),
+            Item("Station Office", "역무실", "en", "ko")
+        )
+        screen.showResult(notice, notice.size, done = true, engine = com.chorockkim.rokidlens.lens.LensPipeline.Engine.AI)
+        snapshot(screen.view)
+    }
+
+    @Test
     fun ready_downloadingModel() {
         val screen = LensScreen(context, fakePreview())
         screen.showReady()

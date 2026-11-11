@@ -171,8 +171,9 @@ class LensScreen(context: Context, private val preview: View?) {
             orientation = LinearLayout.VERTICAL
             addView(Hud.text(c, 12f, Hud.WHITE, bold = true).apply {
                 text = item.translated ?: "…"
-                maxLines = 2
-                ellipsize = TextUtils.TruncateAt.END
+                // Whole sentences: no cut-off translation. A page shows as many paragraphs as fit;
+                // the next swipe brings the following one to the top.
+                maxLines = MAX_TRANSLATION_LINES
                 setLineSpacing(0f, 1.05f)
             })
             addView(Hud.text(c, 9f, Hud.GREY).apply {
@@ -193,5 +194,7 @@ class LensScreen(context: Context, private val preview: View?) {
         const val PREVIEW_W = 120
         const val PREVIEW_H = 213
         const val FROZEN_PER_PAGE = 4
+        /** Only a safety cap: about the whole height of the list. */
+        const val MAX_TRANSLATION_LINES = 12
     }
 }
