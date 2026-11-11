@@ -35,8 +35,9 @@ import kotlinx.coroutines.launch
  * the bottom of the glasses display (the rest stays black, i.e. transparent on the waveguide),
  * with clock / battery, Wi-Fi and update pills just above it.
  *
- * Tap: freeze (translate everything in one still) / back to live. Front/back swipes: page
- * through a frozen result. Back: from frozen to live, from live out of the app.
+ * The preview only aims; nothing reads the video. Tap: take a photo and translate it (again
+ * from a result). Front/back swipes: page through the result. Back: close the result, then
+ * leave the app.
  */
 class MainActivity : ComponentActivity(), LensPipeline.Listener {
     private val app get() = application as RokidLensApp
@@ -51,7 +52,6 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
     private val ocr = OcrEngine()
     private val translator by lazy { LensTranslator { status -> runOnUiThread { screen.setStatus(status) } } }
     private val pipeline by lazy { LensPipeline(ocr, translator, this) }
-    private var lastLive: List<LensPipeline.Item> = emptyList()
 
     private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) startCamera() else screen.setStatus("카메라 권한이 필요해요")
@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
     }
 
     private fun startCamera() {
-        camera.start(this, previewView, pipeline::onLiveFrame) { e ->
+        camera.start(this, previewView) { e ->
             runOnUiThread { screen.setStatus("카메라를 못 열었어요 · ${e.message ?: e.javaClass.simpleName}") }
         }
     }
@@ -190,42 +190,33 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
 
     private fun dispatchAction(action: GlassesInput.Action) {
         when (action) {
-            GlassesInput.Action.SELECT -> if (screen.mode == LensScreen.Mode.LIVE) freeze() else backToLive()
+            GlassesInput.Action.SELECT -> if (!screen.reading) takePhoto()
             GlassesInput.Action.NEXT, GlassesInput.Action.DOWN -> screen.page(1)
             GlassesInput.Action.PREVIOUS, GlassesInput.Action.UP -> screen.page(-1)
-            GlassesInput.Action.BACK -> if (screen.mode == LensScreen.Mode.FROZEN) backToLive() else finish()
+            GlassesInput.Action.BACK -> if (screen.mode == LensScreen.Mode.RESULT) screen.showReady() else finish()
             else -> Unit
         }
     }
 
-    private fun freeze() {
-        pipeline.paused = true
-        screen.showFreezing()
-        camera.takeStill(pipeline::onStill) { e -> onError("사진을 못 찍었어요 · ${e.message ?: e.javaClass.simpleName}") }
-    }
-
-    private fun backToLive() {
-        pipeline.paused = false
-        screen.showLive(lastLive)
+    private fun takePhoto() {
+        screen.setStatus(null)
+        screen.showReading()
+        camera.takeStill(pipeline::read) { e -> onError("사진을 못 찍었어요 · ${e.message ?: e.javaClass.simpleName}") }
     }
 
     // endregion
 
     // region LensPipeline.Listener (called off the main thread)
 
-    override fun onLive(items: List<LensPipeline.Item>) = runOnUiThread {
-        lastLive = items
-        if (screen.mode == LensScreen.Mode.LIVE) {
-            screen.setStatus(null)
-            screen.showLive(items)
-        }
+    override fun onProgress(items: List<LensPipeline.Item>, total: Int, done: Boolean) = runOnUiThread {
+        // Closed with back while it was still reading: drop the late result.
+        if (screen.mode == LensScreen.Mode.RESULT) screen.showResult(items, total, done)
     }
 
-    override fun onFrozenProgress(items: List<LensPipeline.Item>, total: Int, done: Boolean) = runOnUiThread {
-        if (screen.mode == LensScreen.Mode.FROZEN) screen.showFrozen(items, total, done)
+    override fun onError(message: String) = runOnUiThread {
+        screen.setStatus(message)
+        if (screen.reading) screen.showReady()
     }
-
-    override fun onError(message: String) = runOnUiThread { screen.setStatus(message) }
 
     // endregion
 

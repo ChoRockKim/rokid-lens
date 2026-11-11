@@ -5,18 +5,14 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.util.Range
-import android.util.Size
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
@@ -24,13 +20,10 @@ import androidx.lifecycle.LifecycleOwner
 import java.util.concurrent.Executors
 
 /**
- * The glasses camera through CameraX: a small preview to aim with, a 1280x720 analysis stream
- * for live mode (the same size Rokid Nexus streams from these glasses) and full-resolution stills
- * for freeze mode. CameraX handles the sensor-to-display rotation (the glasses screen is
- * portrait); [Frame.rotationDegrees] is passed on to ML Kit.
- *
- * Analysis keeps only the latest frame: while one frame is being read the next ones are dropped,
- * so live mode never falls behind the camera.
+ * The glasses camera through CameraX: a small preview to aim with, and a full-resolution still
+ * when the wearer taps. Nothing reads the video itself (no continuous OCR, which is what made the
+ * glasses warm). CameraX handles the sensor-to-display rotation (the glasses screen is portrait);
+ * [Frame.rotationDegrees] is passed on to ML Kit.
  *
  * To read better and run cooler on the glasses:
  * - [ZOOM]x zoom on the camera itself: the wide-angle edges, where text is too small and
@@ -45,12 +38,12 @@ class LensCamera(private val context: Context) {
         fun close() = proxy.close()
     }
 
-    private val analysisExecutor = Executors.newSingleThreadExecutor()
+    private val captureExecutor = Executors.newSingleThreadExecutor()
     private var provider: ProcessCameraProvider? = null
     private var capture: ImageCapture? = null
 
     @OptIn(ExperimentalCamera2Interop::class)
-    fun start(owner: LifecycleOwner, previewView: PreviewView?, onFrame: (Frame) -> Unit, onError: (Throwable) -> Unit) {
+    fun start(owner: LifecycleOwner, previewView: PreviewView?, onError: (Throwable) -> Unit) {
         val future = ProcessCameraProvider.getInstance(context)
         future.addListener({
             runCatching {
@@ -60,18 +53,12 @@ class LensCamera(private val context: Context) {
                 val preview = Preview.Builder().apply { fps?.let { Camera2Interop.Extender(this).setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, it) } }.build().also { pv ->
                     previewView?.let { pv.surfaceProvider = it.surfaceProvider }
                 }
-                val analysis = ImageAnalysis.Builder()
-                    .apply { fps?.let { Camera2Interop.Extender(this).setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, it) } }
-                    .setResolutionSelector(selector(Size(1280, 720)))
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also { it.setAnalyzer(analysisExecutor) { proxy -> onFrame(Frame(proxy)) } }
                 val still = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
                     .build()
                 capture = still
                 p.unbindAll()
-                val useCases = listOfNotNull(preview.takeIf { previewView != null }, analysis, still)
+                val useCases = listOfNotNull(preview.takeIf { previewView != null }, still)
                 val camera = p.bindToLifecycle(owner, glassesCamera(), *useCases.toTypedArray())
                 val zoom = camera.cameraInfo.zoomState.value
                 val ratio = ZOOM.coerceIn(zoom?.minZoomRatio ?: 1f, zoom?.maxZoomRatio ?: 1f)
@@ -83,7 +70,7 @@ class LensCamera(private val context: Context) {
     /** Takes a full-resolution still for freeze mode. */
     fun takeStill(onStill: (Frame) -> Unit, onError: (Throwable) -> Unit) {
         val c = capture ?: return onError(IllegalStateException("camera not started"))
-        c.takePicture(analysisExecutor, object : ImageCapture.OnImageCapturedCallback() {
+        c.takePicture(captureExecutor, object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) = onStill(Frame(image))
             override fun onError(exception: ImageCaptureException) = onError(exception)
         })
@@ -97,7 +84,7 @@ class LensCamera(private val context: Context) {
 
     fun release() {
         stop()
-        analysisExecutor.shutdown()
+        captureExecutor.shutdown()
     }
 
     /**
@@ -136,8 +123,4 @@ class LensCamera(private val context: Context) {
         val ranges = manager.getCameraCharacteristics(id).get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
         pickFpsRange(ranges?.map { it.lower to it.upper }.orEmpty())?.let { (lo, hi) -> Range(lo, hi) }
     }.getOrNull()
-
-    private fun selector(size: Size) = ResolutionSelector.Builder()
-        .setResolutionStrategy(ResolutionStrategy(size, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
-        .build()
 }

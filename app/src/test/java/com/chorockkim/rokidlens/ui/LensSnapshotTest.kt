@@ -48,32 +48,40 @@ class LensSnapshotTest {
     )
 
     @Test
-    fun live_translating() {
+    fun ready() {
         val screen = LensScreen(context, fakePreview())
-        screen.showLive(sign)
+        screen.showReady()
         snapshot(screen.view)
     }
 
     @Test
-    fun live_lookingForText() {
+    fun result_translating() {
         val screen = LensScreen(context, fakePreview())
-        screen.showLive(emptyList())
-        screen.setStatus("번역 모델 받는 중 · 일본어→한국어")
-        snapshot(screen.view)
-    }
-
-    @Test
-    fun frozen_paging() {
-        val screen = LensScreen(context, fakePreview())
-        screen.showFreezing()
+        screen.showReading()
         val menu = listOf(
             Item("本日のおすすめ", "오늘의 추천", "ja", "ko"),
             Item("味噌ラーメン 950円", "된장 라멘 950엔", "ja", "ko"),
             Item("餃子 (6個) 450円", "교자(6개) 450엔", "ja", "ko"),
             Item("ご飯 大盛り無料", null, null, null)
         )
-        screen.showFrozen(menu, menu.size, done = false)
+        screen.showResult(menu, menu.size, done = false)
         screen.page(1)
+        snapshot(screen.view)
+    }
+
+    @Test
+    fun result_done() {
+        val screen = LensScreen(context, fakePreview())
+        screen.showReading()
+        screen.showResult(sign, sign.size, done = true)
+        snapshot(screen.view)
+    }
+
+    @Test
+    fun ready_downloadingModel() {
+        val screen = LensScreen(context, fakePreview())
+        screen.showReady()
+        screen.setStatus("번역 모델 받는 중 · 일본어→한국어")
         snapshot(screen.view)
     }
 
