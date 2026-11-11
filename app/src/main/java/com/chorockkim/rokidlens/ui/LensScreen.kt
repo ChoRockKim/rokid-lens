@@ -60,6 +60,7 @@ class LensScreen(context: Context, private val preview: View?) {
     private var frozen: List<LensPipeline.Item> = emptyList()
     private var frozenTotal = 0
     private var frozenDone = false
+    private var engine = LensPipeline.Engine.OFFLINE
     var frozenIndex = 0
         private set
 
@@ -117,8 +118,14 @@ class LensScreen(context: Context, private val preview: View?) {
         render(emptyList(), "읽는 중…")
     }
 
-    fun showResult(list: List<LensPipeline.Item>, total: Int, done: Boolean) {
+    fun showResult(
+        list: List<LensPipeline.Item>,
+        total: Int,
+        done: Boolean,
+        engine: LensPipeline.Engine = LensPipeline.Engine.OFFLINE
+    ) {
         mode = Mode.RESULT
+        this.engine = engine
         frozen = list
         frozenTotal = total
         frozenDone = done
@@ -139,10 +146,11 @@ class LensScreen(context: Context, private val preview: View?) {
     private fun renderFrozen() {
         modeLabel.text = "번역"
         val translatedCount = frozen.count { it.translated != null }
+        val via = if (engine == LensPipeline.Engine.AI) " · AI" else " · 오프라인"
         header.text = when {
-            frozen.isEmpty() && frozenDone -> "글자를 못 찾았어요"
-            !frozenDone -> "번역 중 $translatedCount/$frozenTotal" + pairLabel(frozen)
-            else -> "${frozenIndex + 1} / ${frozen.size}" + pairLabel(frozen)
+            frozen.isEmpty() && frozenDone -> "글자를 못 찾았어요$via"
+            !frozenDone -> "번역 중 $translatedCount/$frozenTotal$via" + pairLabel(frozen)
+            else -> "${frozenIndex + 1} / ${frozen.size}$via" + pairLabel(frozen)
         }
         hint.text = "앞뒤로: 넘기기 · 탭: 다시 찍기 · 뒤로: 닫기"
         render(frozen.drop(frozenIndex).take(FROZEN_PER_PAGE), if (frozen.isEmpty()) "글자가 가운데 오게 하고\n다시 탭해 보세요" else null)

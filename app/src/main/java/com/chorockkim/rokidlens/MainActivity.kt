@@ -15,6 +15,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.chorockkim.rokidlens.camera.LensCamera
+import com.chorockkim.rokidlens.lens.CloudTranslator
 import com.chorockkim.rokidlens.lens.LensPipeline
 import com.chorockkim.rokidlens.lens.LensTranslator
 import com.chorockkim.rokidlens.lens.OcrEngine
@@ -51,7 +52,7 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
     private val camera by lazy { LensCamera(this) }
     private val ocr = OcrEngine()
     private val translator by lazy { LensTranslator { status -> runOnUiThread { screen.setStatus(status) } } }
-    private val pipeline by lazy { LensPipeline(ocr, translator, this) }
+    private val pipeline by lazy { LensPipeline(ocr, translator, CloudTranslator(app.http), this) }
 
     private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) startCamera() else screen.setStatus("카메라 권한이 필요해요")
@@ -208,9 +209,9 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
 
     // region LensPipeline.Listener (called off the main thread)
 
-    override fun onProgress(items: List<LensPipeline.Item>, total: Int, done: Boolean) = runOnUiThread {
+    override fun onProgress(items: List<LensPipeline.Item>, total: Int, done: Boolean, engine: LensPipeline.Engine) = runOnUiThread {
         // Closed with back while it was still reading: drop the late result.
-        if (screen.mode == LensScreen.Mode.RESULT) screen.showResult(items, total, done)
+        if (screen.mode == LensScreen.Mode.RESULT) screen.showResult(items, total, done, engine)
     }
 
     override fun onError(message: String) = runOnUiThread {

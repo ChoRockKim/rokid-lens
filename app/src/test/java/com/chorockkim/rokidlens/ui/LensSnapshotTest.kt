@@ -73,7 +73,7 @@ class LensSnapshotTest {
     fun result_done() {
         val screen = LensScreen(context, fakePreview())
         screen.showReading()
-        screen.showResult(sign, sign.size, done = true)
+        screen.showResult(sign, sign.size, done = true, engine = com.chorockkim.rokidlens.lens.LensPipeline.Engine.AI)
         snapshot(screen.view)
     }
 

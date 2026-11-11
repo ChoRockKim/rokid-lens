@@ -19,6 +19,9 @@ val releaseKeyAlias = providers.gradleProperty("RELEASE_KEY_ALIAS").orNull ?: "r
 val updateUrl = providers.gradleProperty("updateUrl").orNull
     ?: "https://server-v2-production-8f97.up.railway.app/apps/rokid-lens"
 
+val translateUrl = providers.gradleProperty("translateUrl").orNull
+    ?: "https://server-v2-production-8f97.up.railway.app/lens/translate"
+
 kotlin {
     jvmToolchain(21)
 }
@@ -36,6 +39,8 @@ configure<ApplicationExtension> {
         versionName = appVersion
 
         buildConfigField("String", "UPDATE_URL", "\"$updateUrl\"")
+        // Photo translation with Gemini on the rokid-conversate server (falls back to ML Kit).
+        buildConfigField("String", "TRANSLATE_URL", "\"$translateUrl\"")
         // The glasses are arm64; leaving out other ABIs keeps the bundled ML Kit models small.
         ndk { abiFilters += listOf("arm64-v8a") }
     }
