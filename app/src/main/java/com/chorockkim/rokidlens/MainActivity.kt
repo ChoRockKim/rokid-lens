@@ -121,8 +121,31 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
         })
     }
 
+    /** Waiting for the wearer to allow installs in the system screen opened by [askInstallPermission]. */
+    private var waitingForInstallPermission = false
+    private var askedInstallPermission = false
+
+    /**
+     * True if this app may install APKs. Otherwise opens the system "이 출처 허용" screen for it,
+     * once per app start, and the update resumes when the wearer comes back with it allowed.
+     */
+    private fun askInstallPermission(): Boolean {
+        if (app.updater.canInstall()) return true
+        if (!askedInstallPermission) {
+            askedInstallPermission = true
+            waitingForInstallPermission = runCatching {
+                startActivity(app.updater.installPermissionIntent())
+            }.isSuccess
+        }
+        return false
+    }
+
     override fun onStart() {
         super.onStart()
+        if (waitingForInstallPermission && app.updater.canInstall()) {
+            waitingForInstallPermission = false
+            checkForUpdate()
+        }
         wifiEnabler.start()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera()
@@ -214,8 +237,8 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
             val release = (runCatching { updater.check(force = true) }.getOrNull() as? Updater.Check.Available)?.release
             showUpdate(release)
             if (release == null) return@launch
-            if (!updater.canInstall()) {
-                updateBanner.text = "새 버전 v${release.versionName} · 설치 허용 필요"
+            if (!askInstallPermission()) {
+                updateBanner.text = "새 버전 v${release.versionName} · 설치 허용을 켜면 이어서 해요"
                 return@launch
             }
             updateBanner.text = "업데이트 v${release.versionName} 받는 중"
