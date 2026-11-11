@@ -41,6 +41,10 @@ import kotlinx.coroutines.launch
  * leave the app.
  */
 class MainActivity : ComponentActivity(), LensPipeline.Listener {
+    companion object {
+        const val SETTLE_MS = 600L
+    }
+
     private val app get() = application as RokidLensApp
     private lateinit var screen: LensScreen
     private lateinit var ringTarget: RingTarget
@@ -200,8 +204,18 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
         }
     }
 
+    /**
+     * The tap on the temple's touchpad shakes the camera, so the photo is taken a moment later
+     * ([SETTLE_MS]) instead of during the shake.
+     */
     private fun takePhoto() {
         screen.setStatus(null)
+        screen.showReading(steady = true)
+        window.decorView.postDelayed({ capture() }, SETTLE_MS)
+    }
+
+    private fun capture() {
+        if (!screen.reading) return // closed with back in the meantime
         screen.showReading()
         try {
             camera.takeStill(pipeline::read) { e -> onError("사진을 못 찍었어요 · ${e.message ?: e.javaClass.simpleName}") }

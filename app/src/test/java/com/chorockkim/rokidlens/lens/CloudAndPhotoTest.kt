@@ -28,9 +28,10 @@ class CloudAndPhotoTest {
 
     @Test
     fun photosAreDecodedSmall() {
+        // MAX_SIDE 2048: halve only while the result stays at least that big.
         assertEquals(1, Photo.sampleSize(1920, 1080))
-        assertEquals(2, Photo.sampleSize(4000, 3000))
-        assertEquals(4, Photo.sampleSize(8000, 6000))
-        assertEquals(1, Photo.sampleSize(1600, 900))
+        assertEquals(1, Photo.sampleSize(4000, 3000))
+        assertEquals(2, Photo.sampleSize(8000, 6000))
+        assertEquals(4, Photo.sampleSize(16000, 12000))
     }
 }

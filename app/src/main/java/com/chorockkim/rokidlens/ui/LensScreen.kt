@@ -107,15 +107,16 @@ class LensScreen(context: Context, private val preview: View?) {
         render(emptyList(), "탭하면 사진을 찍어\n보이는 글자를 번역해요")
     }
 
-    fun showReading() {
+    /** [steady]: waiting for the head to settle after the tap, before the photo is taken. */
+    fun showReading(steady: Boolean = false) {
         mode = Mode.RESULT
         frozen = emptyList()
         frozenIndex = 0
         frozenDone = false
         modeLabel.text = "번역"
-        header.text = "사진을 읽는 중…"
+        header.text = if (steady) "가만히 계세요…" else "사진을 읽는 중…"
         hint.text = "뒤로: 취소"
-        render(emptyList(), "읽는 중…")
+        render(emptyList(), if (steady) "찍는 중…" else "읽는 중…")
     }
 
     fun showResult(

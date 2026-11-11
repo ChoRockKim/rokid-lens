@@ -12,8 +12,9 @@ import java.io.ByteArrayOutputStream
  * and turned the right way up, so nothing downstream has to handle rotation.
  */
 object Photo {
-    const val MAX_SIDE = 1600
-    const val JPEG_QUALITY = 85
+    /** Enough detail for small print; the model scales it down itself if it needs to. */
+    const val MAX_SIDE = 2048
+    const val JPEG_QUALITY = 90
 
     fun jpegBytes(proxy: ImageProxy): ByteArray {
         val buffer = proxy.planes[0].buffer

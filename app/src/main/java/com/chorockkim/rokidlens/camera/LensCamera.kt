@@ -59,7 +59,8 @@ class LensCamera(private val context: Context) {
                 // About 1920x1080: with the 2x zoom that is plenty for reading, and a full-sensor
                 // still was big enough to run the glasses out of memory.
                 val still = ImageCapture.Builder()
-                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    // Quality first (sharper small text); the size cap above keeps memory in check.
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
                     .setResolutionSelector(
                         ResolutionSelector.Builder()
                             .setResolutionStrategy(ResolutionStrategy(Size(1920, 1080), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
