@@ -114,6 +114,7 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
         root.addView(updateBanner, Hud.updateNoticeParams(this))
         setContentView(root)
         ringTarget.requestFocus()
+        app.takeLastCrash()?.let { screen.setStatus("지난번 튕긴 이유: $it") }
         watchNetwork()
         checkForUpdate()
 
@@ -202,7 +203,11 @@ class MainActivity : ComponentActivity(), LensPipeline.Listener {
     private fun takePhoto() {
         screen.setStatus(null)
         screen.showReading()
-        camera.takeStill(pipeline::read) { e -> onError("사진을 못 찍었어요 · ${e.message ?: e.javaClass.simpleName}") }
+        try {
+            camera.takeStill(pipeline::read) { e -> onError("사진을 못 찍었어요 · ${e.message ?: e.javaClass.simpleName}") }
+        } catch (e: Throwable) {
+            onError("사진을 못 찍었어요 · ${e.message ?: e.javaClass.simpleName}")
+        }
     }
 
     // endregion

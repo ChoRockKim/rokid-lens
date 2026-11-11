@@ -19,7 +19,7 @@ import com.chorockkim.rokidlens.ui.Hud.dp
  * it), the mode on top and the controls at the bottom.
  *
  * Ready: waiting for a tap (the preview shows what a photo would read).
- * Result: every paragraph of the photo, two at a time, swiped through.
+ * Result: every paragraph of the photo, four at a time, swiped through.
  */
 class LensScreen(context: Context, private val preview: View?) {
     enum class Mode { READY, RESULT }
@@ -159,7 +159,7 @@ class LensScreen(context: Context, private val preview: View?) {
     private fun render(list: List<LensPipeline.Item>, emptyText: String?) {
         items.removeAllViews()
         list.forEachIndexed { i, item -> items.addView(itemView(item), LinearLayout.LayoutParams(-1, -2).apply {
-            if (i > 0) topMargin = view.context.dp(7)
+            if (i > 0) topMargin = view.context.dp(5)
         }) }
         empty.text = emptyText
         empty.visibility = if (list.isEmpty() && emptyText != null) View.VISIBLE else View.GONE
@@ -169,15 +169,15 @@ class LensScreen(context: Context, private val preview: View?) {
         val c = view.context
         return LinearLayout(c).apply {
             orientation = LinearLayout.VERTICAL
-            addView(Hud.text(c, 13f, Hud.WHITE, bold = true).apply {
+            addView(Hud.text(c, 12f, Hud.WHITE, bold = true).apply {
                 text = item.translated ?: "…"
-                maxLines = 3
-                ellipsize = TextUtils.TruncateAt.END
-                setLineSpacing(0f, 1.1f)
-            })
-            addView(Hud.text(c, 10f, Hud.GREY).apply {
-                text = item.source
                 maxLines = 2
+                ellipsize = TextUtils.TruncateAt.END
+                setLineSpacing(0f, 1.05f)
+            })
+            addView(Hud.text(c, 9f, Hud.GREY).apply {
+                text = item.source
+                maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
             }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = c.dp(2) })
         }
@@ -192,6 +192,6 @@ class LensScreen(context: Context, private val preview: View?) {
         /** Portrait, like the glasses camera (the display is portrait). */
         const val PREVIEW_W = 120
         const val PREVIEW_H = 213
-        const val FROZEN_PER_PAGE = 2
+        const val FROZEN_PER_PAGE = 4
     }
 }

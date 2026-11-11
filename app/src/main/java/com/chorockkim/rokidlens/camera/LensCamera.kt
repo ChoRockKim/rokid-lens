@@ -81,7 +81,15 @@ class LensCamera(private val context: Context) {
     fun takeStill(onStill: (Frame) -> Unit, onError: (Throwable) -> Unit) {
         val c = capture ?: return onError(IllegalStateException("camera not started"))
         c.takePicture(captureExecutor, object : ImageCapture.OnImageCapturedCallback() {
-            override fun onCaptureSuccess(image: ImageProxy) = onStill(Frame(image))
+            override fun onCaptureSuccess(image: ImageProxy) {
+                try {
+                    onStill(Frame(image))
+                } catch (e: Throwable) {
+                    runCatching { image.close() }
+                    onError(e)
+                }
+            }
+
             override fun onError(exception: ImageCaptureException) = onError(exception)
         })
     }

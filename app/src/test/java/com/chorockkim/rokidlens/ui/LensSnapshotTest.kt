@@ -62,7 +62,9 @@ class LensSnapshotTest {
             Item("本日のおすすめ", "오늘의 추천", "ja", "ko"),
             Item("味噌ラーメン 950円", "된장 라멘 950엔", "ja", "ko"),
             Item("餃子 (6個) 450円", "교자(6개) 450엔", "ja", "ko"),
-            Item("ご飯 大盛り無料", null, null, null)
+            Item("ご飯 大盛り無料", null, null, null),
+            Item("お冷はセルフサービスです", "물은 셀프서비스입니다", "ja", "ko"),
+            Item("現金のみ", "현금만 가능", "ja", "ko")
         )
         screen.showResult(menu, menu.size, done = false)
         screen.page(1)
