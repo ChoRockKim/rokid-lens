@@ -8,13 +8,19 @@ import kotlin.math.hypot
  * as a frame ([FocusFrame][com.chorockkim.rokidlens.ui.FocusFrame]).
  */
 object Focus {
-    /** Width and height of the read area, as a share of the photo's. */
-    const val FRACTION = 0.6f
+    /** Width of the read area, as a share of the photo's width. */
+    const val FRACTION = 0.9f
+    /** The read area is wide, not tall: 16:9, like a line of text or a sign. */
+    const val ASPECT = 9f / 16f
 
-    /** (left, top, width, height) of the centred area of a [w] x [h] picture. */
+    /**
+     * (left, top, width, height) of the centred, landscape read area of a [w] x [h] picture:
+     * [fraction] of the width, [ASPECT] as tall as it is wide (at most the whole height).
+     * On the 16:9 preview, which shows the photo's full width, this is the same area.
+     */
     fun area(w: Int, h: Int, fraction: Float = FRACTION): IntArray {
         val cw = (w * fraction).toInt().coerceIn(1, w)
-        val ch = (h * fraction).toInt().coerceIn(1, h)
+        val ch = (cw * ASPECT).toInt().coerceIn(1, h)
         return intArrayOf((w - cw) / 2, (h - ch) / 2, cw, ch)
     }
 

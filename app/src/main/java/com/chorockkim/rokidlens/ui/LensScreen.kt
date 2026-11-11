@@ -192,9 +192,12 @@ class LensScreen(context: Context, private val preview: View?) {
     }
 
     companion object {
-        /** Portrait, like the glasses camera (the display is portrait). */
-        const val PREVIEW_W = 120
-        const val PREVIEW_H = 213
+        /**
+         * Landscape 16:9: the middle band of the (portrait) camera picture, full width, which is
+         * where the read area ([com.chorockkim.rokidlens.lens.Focus]) is.
+         */
+        const val PREVIEW_W = 136
+        const val PREVIEW_H = 76
         const val FROZEN_PER_PAGE = 4
         /** Only a safety cap: about the whole height of the list. */
         const val MAX_TRANSLATION_LINES = 12

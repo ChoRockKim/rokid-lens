@@ -6,9 +6,14 @@ import org.junit.Test
 
 class FocusTest {
     @Test
-    fun readsTheCentredSixtyPercent() {
-        assertArrayEquals(intArrayOf(400, 225, 1200, 675), Focus.area(2000, 1125))
-        assertArrayEquals(intArrayOf(0, 0, 10, 10), Focus.area(10, 10, 1f))
+    fun readsAWideBandInTheMiddle() {
+        // Portrait photo from the glasses: 90% of the width, 16:9.
+        assertArrayEquals(intArrayOf(54, 687, 972, 546), Focus.area(1080, 1920))
+        // On the 16:9 preview the same area is 90% x 90%.
+        val p = Focus.area(160, 90)
+        assertArrayEquals(intArrayOf(8, 4, 144, 81), p)
+        // Never taller than the picture.
+        assertArrayEquals(intArrayOf(0, 0, 100, 10), Focus.area(100, 10, 1f))
     }
 
     @Test
